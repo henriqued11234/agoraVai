@@ -1,0 +1,40 @@
+### ESTÁGIO 1: Build com Maven
+# Usa uma imagem com Maven e JDK para compilar a aplicação
+FROM maven:3.9-eclipse-temurin-21 AS build
+
+# Define o diretório de trabalho
+WORKDIR /app
+
+# Otimização de Cache: Copia os arquivos de configuração do projeto,
+# especificando que eles estão dentro da pasta 'code-with-quarkus'.
+COPY code-with-quarkus/pom.xml .
+COPY code-with-quarkus/.mvn .mvn
+COPY code-with-quarkus/mvnw .
+COPY code-with-quarkus/mvnw.cmd .
+
+# Baixa as dependências para acelerar builds futuros
+RUN mvn dependency:go-offline -B
+
+# Agora, copia o resto do código-fonte, também da pasta correta.
+COPY code-with-quarkus/src ./src
+
+# Finalmente, compila o projeto e cria o fast-jar.
+RUN mvn package -B -Dquarkus.package.type=fast-jar -DskipTests
+
+
+### ESTÁGIO 2: Imagem final de execução
+# Usa a imagem base recomendada pelo Quarkus
+FROM registry.access.redhat.com/ubi9/openjdk-21:1.23
+
+# Define o usuário para rodar a aplicação por segurança
+USER 185
+WORKDIR /deployments
+
+# Copia APENAS os artefatos compilados do estágio 'build'
+COPY --from=build --chown=185:0 /app/target/quarkus-app/ .
+
+# Expõe a porta
+EXPOSE 8080
+
+# Comando para iniciar a aplicação
+CMD ["java", "-jar", "quarkus-run.jar"]
