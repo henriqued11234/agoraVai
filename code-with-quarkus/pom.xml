@@ -40,11 +40,11 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-jdbc-oracle</artifactId>
         </dependency>
-    <dependency>
+        <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-resteasy-cors</artifactId>
+        <version>3.8.2</version>
     </dependency>
-
 
 
 
